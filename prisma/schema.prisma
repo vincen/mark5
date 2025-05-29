@@ -6,10 +6,20 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model mark5_user {
+  pkid      Int     @id @default(autoincrement())
+  name      String
+  email     String
+  birthdate DateTime
+  gender    String
+  height    Int
+  status    Boolean
 }
