@@ -6,7 +6,8 @@
   "scripts": {
     "generate": "prisma generate",
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
-    "test": "vitest"
+    "test:unit": "vitest run tests/services",
+    "test:integration": "vitest run tests/interfaces"
   },
   "keywords": [],
   "author": "vincen.gao@gmail.com",

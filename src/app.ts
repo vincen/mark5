@@ -4,7 +4,6 @@ import sensible from 'fastify-sensible';
 import { userRoutes } from '@interfaces/controller/userRoutes';
 
 
-
 export async function createApp() {
   const app = Fastify({
     logger: true,
