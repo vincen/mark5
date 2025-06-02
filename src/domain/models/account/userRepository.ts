@@ -1,4 +1,4 @@
-import { User, Gender } from '@domain/models/user';
+import { User, Gender } from '@domain/models/account/user';
 import { prisma } from '@infrastructure/db';
 
 export class UserRepository {

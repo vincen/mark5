@@ -1,5 +1,5 @@
-import { User } from "@domain/models/user";
-import { UserRepository } from "@domain/repositories/userRepository";
+import { User } from "@domain/models/account/user";
+import { UserRepository } from "@domain/models/account/userRepository";
 
 export class UserService {
   private repo = new UserRepository();
