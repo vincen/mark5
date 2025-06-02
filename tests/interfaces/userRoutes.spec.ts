@@ -1,6 +1,6 @@
 import { beforeAll, afterAll, describe, it, expect } from 'vitest';
 import { prisma } from '@infrastructure/db';
-import { Gender } from '@domain/models/user';
+import { Gender } from '@domain/models/account/user';
 import { createApp } from '@app';
 
 let app: Awaited<ReturnType<typeof createApp>>;
