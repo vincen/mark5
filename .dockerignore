@@ -1,0 +1,22 @@
+# Node modules can be reinstalled inside the container
+node_modules
+
+# Exclude test files and folders not needed in production
+tests/
+
+# Git metadata
+.git
+.gitignore
+# Dockerfile and docker-compose files are not needed in production
+Dockerfile
+docker-compose.yml
+
+# OS or editor specific files
+.DS_Store
+.vscode/
+
+# TypeScript build output
+dist/
+
+# Testing artifacts
+tests/

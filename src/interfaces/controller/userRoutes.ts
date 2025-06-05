@@ -1,5 +1,5 @@
 import { UserService } from '@application/services/userService';
-import { Gender } from '@domain/models/user';
+import { Gender } from '@domain/models/account/user';
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 

@@ -24,10 +24,10 @@ mark5
 │   │   └── services/
 │   │       └── userService.ts
 │   ├── domain/
-│   │   ├── models/
-│   │   │   └── user.ts
-│   │   └── repositories/
-│   │       └── userRepository.ts
+│   │   └── models/
+│   │       └── account/
+│   │           ├── user.ts
+│   │           └── userRepository.ts
 │   ├── infrastructure/
 │   │   └── db.ts
 │   ├── interfaces/
@@ -64,6 +64,9 @@ $ npm install fastify @prisma/client fastify-sensible
 #
 $ npm install -D typescript ts-node prisma vitest @types/node tsconfig-paths ts-node-dev
 
+# module-alias 能让 Node 在加载 JS 时，把诸如 require('@app') 或 import ... from '@domain/models/user' （编译后的 CommonJS） 映射到指定的目录或文件。
+$ npm install -S module-alias
+
 # init typescript config
 npx tsc --init --rootDir src --outDir dist --esModuleInterop --resolveJsonModule --strict
 
@@ -76,7 +79,20 @@ npx prisma migrate dev --name init
 ```
 
 
+# Docker
 
+- region: 华北6（乌兰察布）
+
+```shell
+# 构建镜像命令
+$ docker build -t mark5_app:v4 .
+
+# 运行容器
+docker run -d \
+  --name mark5_app \
+  -p 3000:3000 \
+  mark5_app:v4
+```
 
 
 

@@ -1,5 +1,5 @@
-import { User, Gender } from '@domain/models/account/user';
-import { prisma } from '@infrastructure/db';
+import { prisma } from "@infrastructure/db";
+import { User, Gender } from "./user";
 
 export class UserRepository {
   private toModel(row: any): User {

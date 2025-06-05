@@ -4,6 +4,8 @@
   "description": "",
   "main": "dist/server.js",
   "scripts": {
+    "build": "tsc",
+    "start": "node -r module-alias/register dist/server.js",
     "generate": "prisma generate",
     "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/server.ts",
     "test:unit": "vitest run tests/services",
@@ -16,7 +18,8 @@
   "dependencies": {
     "@prisma/client": "^6.8.2",
     "fastify": "^5.3.3",
-    "fastify-sensible": "^3.1.2"
+    "fastify-sensible": "^3.1.2",
+    "module-alias": "^2.2.3"
   },
   "devDependencies": {
     "@types/node": "^22.15.24",
@@ -26,5 +29,12 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.4"
+  },
+  "_moduleAliases": {
+    "@app": "dist/app.js",
+    "@domain": "dist/domain",
+    "@application": "dist/application",
+    "@infrastructure": "dist/infrastructure",
+    "@interfaces": "dist/interfaces"
   }
 }

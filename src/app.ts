@@ -20,9 +20,9 @@ export async function createApp() {
   // Register routes
   await app.register(userRoutes, { prefix: '/api' });
   // Add a health check route
-  // app.get('/health', async (request, reply) => {
-  //   return { status: 'ok', timestamp: new Date() };
-  // });
+  app.get('/health', async (request, reply) => {
+    return { status: 'ok', timestamp: new Date() };
+  });
   // // Add a not found route
   // app.setNotFoundHandler((request, reply) => {
   //   reply.status(404).send({ error: 'Not Found' });
