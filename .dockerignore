@@ -3,6 +3,7 @@ node_modules
 
 # Exclude test files and folders not needed in production
 tests/
+docs/
 
 # Git metadata
 .git
