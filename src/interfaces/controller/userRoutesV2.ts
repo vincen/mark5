@@ -1,7 +1,7 @@
 // src/interfaces/controller/userRoutes.ts
 import { UserDto } from '@application/dto/userDto'
 import { UserServiceV2 } from '@application/services/userServiceV2'
-import { Gender } from '@domain/models/account/user'
+import { Gender, User } from '@domain/models/account/user'
 import { CreateUserForm, UpdateUserForm } from '@interfaces/form/userForm'
 import { FastifyInstance, FastifySchema } from 'fastify'
 
@@ -132,19 +132,17 @@ export default async function userRoutes(fastify: FastifyInstance) {
 
   fastify.post('/users', { schema: createUserSchema }, async (request, reply) => {
     const body = request.body as CreateUserForm;
-    const user = await service.create({
-      name: body.name,
-      email: body.email,
+    const userDto: UserDto = {
+      ...body,
       birthdate: new Date(body.birthdate), // 转换为 Date 对象
-      gender: body.gender,
-      height: body.height,
-      status: body.status});
+    }
+    const user = await service.create(userDto);
     reply.code(201).send(user)
   })
 
   fastify.put('/users/:id', { schema: updateUserSchema }, async (request, reply) => {
     const { id } = request.params as { id: number }
-    const body = request.body as Partial<UpdateUserForm>;
+    const body = request.body as UpdateUserForm;
     const updates: Partial<UserDto> = { ...body } as any;
     if (updates.birthdate) {
       updates.birthdate = new Date(updates.birthdate) // 转换为 Date 对象
