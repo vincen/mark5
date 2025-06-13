@@ -1,10 +1,10 @@
-import { UserService } from '@application/services/userService';
+import { UserServiceV2 } from '@application/services/userServiceV2';
 import { Gender } from '@domain/models/account/user';
 import { prisma } from '@infrastructure/db';
 import { beforeAll, afterAll, describe, it, expect } from 'vitest';
 
 describe('UserService Unit Test', () => {
-  const service = new UserService();
+  const service = new UserServiceV2();
   let createdId: number;
 
   beforeAll(async () => {

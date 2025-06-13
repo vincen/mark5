@@ -8,6 +8,7 @@
 
 # Project Structure
 
+```shell
 mark5
 ├── .env
 ├── .git/
@@ -16,6 +17,7 @@ mark5
 ├── node_modules/
 ├── package-lock.json
 ├── package.json
+├── docs
 ├── prisma/
 │   └── schema.prisma
 ├── src/
@@ -41,7 +43,7 @@ mark5
 │           └── userRoutes.spec.ts
 ├── tsconfig.json
 └── vitest.config.ts
-
+```
 
 # Setup
 

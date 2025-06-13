@@ -16,5 +16,11 @@ export default defineConfig({
       '@infrastructure': '/src/infrastructure',
       "@interfaces": "/src/interfaces"
     },
+    poolOptions: {
+      threads: {            // 开启线程数限制，是因为并发跑 integration 测试时，必然会导致同时操作数据库，产生异常。
+        maxThreads: 1,      // 限制最大线程数为 1
+        minThreads: 1,      // 最小线程数为 1
+      }
+    }
   },
 });
