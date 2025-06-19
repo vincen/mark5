@@ -10,6 +10,8 @@ on:
 jobs:
   Build-and-Test:
     runs-on: ubuntu-latest
+    environment:
+      name: friday-production-env
     strategy:
       matrix:
         node-version: [22.x]
