@@ -1,6 +1,6 @@
 {
   "name": "mark5",
-  "version": "V2",
+  "version": "V3",
   "description": "",
   "main": "dist/server.js",
   "scripts": {
@@ -16,6 +16,8 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@fastify/swagger": "^9.5.1",
+    "@fastify/swagger-ui": "^5.2.3",
     "@prisma/client": "^6.8.2",
     "fastify": "^5.3.3",
     "fastify-sensible": "^3.1.2",

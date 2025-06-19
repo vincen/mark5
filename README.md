@@ -69,6 +69,9 @@ $ npm install -D typescript ts-node prisma vitest @types/node tsconfig-paths ts-
 # module-alias 能让 Node 在加载 JS 时，把诸如 require('@app') 或 import ... from '@domain/models/user' （编译后的 CommonJS） 映射到指定的目录或文件。
 $ npm install -S module-alias
 
+# install swagger
+$ npm install @fastify/swagger @fastify/swagger-ui --save
+
 # init typescript config
 npx tsc --init --rootDir src --outDir dist --esModuleInterop --resolveJsonModule --strict
 

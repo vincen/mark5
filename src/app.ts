@@ -1,9 +1,9 @@
 import Fastify from 'fastify';
 import sensible from 'fastify-sensible';
-
 import userRoutesV2 from '@interfaces/controller/userRoutesV2';
 import { userRoutes } from '@interfaces/controller/userRoutes';
-
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUI from '@fastify/swagger-ui';
 
 export async function createApp() {
   const app = Fastify({
@@ -17,6 +17,45 @@ export async function createApp() {
     },
   });
 
+  // 1. Register Swagger
+  await app.register(fastifySwagger, {
+    openapi: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Mark5 API',
+        description: 'API documentation for Mark5 application',
+        version: 'V3',
+      },
+      servers: [
+        {
+          url: 'http://localhost:3000',
+          description: 'Development server',
+        },
+      ],
+      tags: [
+        { name: 'users-v1', description: 'User related endpoints' },
+        { name: 'users-v2', description: 'User related endpoints for version 2' },
+      ],
+    }
+  });
+
+  // 2. Register Swagger UI
+  await app.register(fastifySwaggerUI, {
+    routePrefix: '/docs',
+    uiConfig: {
+      docExpansion: 'full',
+      deepLinking: false,
+    },
+    // staticCSP: true,
+    // transformStaticCSP: (header) => header,
+    // transformSpecification: (swaggerObject, request, reply) => { return swaggerObject; },
+    // transformSpecificationClone: true,
+    uiHooks: {
+      onRequest: (request, reply, next) => next(),
+      preHandler: (request, reply, next) => next(),
+    }
+  });
+
   await app.register(sensible);
   // Register routes
   await app.register(userRoutes, { prefix: '/api/v1' });
@@ -25,34 +64,6 @@ export async function createApp() {
   app.get('/health', async (request, reply) => {
     return { status: 'ok', timestamp: new Date() };
   });
-  // // Add a not found route
-  // app.setNotFoundHandler((request, reply) => {
-  //   reply.status(404).send({ error: 'Not Found' });
-  // });
-  // // Add a method to handle uncaught exceptions
-  // app.setUncaughtExceptionHandler((error, request, reply) => {
-  //   request.log.error(error);
-  //   reply.status(500).send({ error: 'Internal Server Error' });
-  // });
-  // // Add a method to handle uncaught promise rejections
-  // app.setUncaughtPromiseErrorHandler((error, request, reply) => {
-  //   request.log.error(error);
-  //   reply.status(500).send({ error: 'Internal Server Error' });
-  // });
-  // // Add a method to handle request validation errors
-  // app.setValidatorCompiler(({ schema }) => {
-  //   return (data) => {
-  //     const validate = app.ajv.compile(schema);
-  //     const valid = validate(data);
-  //     if (!valid) {
-  //       const errors = validate.errors.map((err) => ({
-  //         message: err.message,
-
-  // // Error handling
-  // app.setErrorHandler((error, request, reply) => {
-  //   request.log.error(error);
-  //   reply.status(500).send({ error: 'Internal Server Error' });
-  // });
 
   return app;
 }

@@ -6,7 +6,7 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 export async function userRoutes(app: FastifyInstance) {
   const service = new UserService();
 
-  app.post('/users', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.post('/users', {schema: {tags:['users-v1']}}, async (request: FastifyRequest, reply: FastifyReply) => {
     const body = request.body as {
       name: string;
       email: string;
@@ -26,19 +26,19 @@ export async function userRoutes(app: FastifyInstance) {
     reply.code(201).send(created);
   });
 
-  app.get('/users/:pkid', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.get('/users/:pkid', {schema: {tags:['users-v1']}}, async (request: FastifyRequest, reply: FastifyReply) => {
     const { pkid } = request.params as { pkid: string };
     const user = await service.findByPkid(Number(pkid));
     if (!user) return reply.code(404).send({ error: 'User not found' });
     return reply.send(user);
   });
 
-  app.get('/users', async (_request, reply) => {
+  app.get('/users', {schema: {tags:['users-v1']}}, async (_request, reply) => {
     const list = await service.list();
     reply.send(list);
   });
 
-  app.put('/users/:pkid', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.put('/users/:pkid', {schema: {tags:['users-v1']}}, async (request: FastifyRequest, reply: FastifyReply) => {
     const { pkid } = request.params as { pkid: string };
     const data = request.body as Partial<{
       name: string;
@@ -56,7 +56,7 @@ export async function userRoutes(app: FastifyInstance) {
     reply.send(updated);
   });
 
-  app.delete('/users/:pkid', async (request: FastifyRequest, reply: FastifyReply) => {
+  app.delete('/users/:pkid', {schema: {tags:['users-v1']}}, async (request: FastifyRequest, reply: FastifyReply) => {
     const { pkid } = request.params as { pkid: string };
     await service.delete(Number(pkid));
     reply.code(204).send();

@@ -116,12 +116,12 @@ const deleteUserSchema: FastifySchema = {
 export default async function userRoutes(fastify: FastifyInstance) {
   const service = new UserServiceV2()
 
-  fastify.get('/users', { schema: listUsersSchema }, async (request, reply) => {
+  fastify.get('/users', { schema: {listUsersSchema, tags:['users-v2']} }, async (request, reply) => {
     const users = await service.list()
     reply.send(users)
   })
 
-  fastify.get('/users/:id', { schema: getUserSchema }, async (request, reply) => {
+  fastify.get('/users/:id', { schema: {getUserSchema, tags:['users-v2']} }, async (request, reply) => {
     const { id } = request.params as { id: number }
     const user = await service.findByPkid(id)
     if (!user) {
@@ -130,7 +130,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     reply.send(user)
   })
 
-  fastify.post('/users', { schema: createUserSchema }, async (request, reply) => {
+  fastify.post('/users', { schema: {createUserSchema, tags:['users-v2']} }, async (request, reply) => {
     const body = request.body as CreateUserForm;
     const userDto: UserDto = {
       ...body,
@@ -140,7 +140,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     reply.code(201).send(user)
   })
 
-  fastify.put('/users/:id', { schema: updateUserSchema }, async (request, reply) => {
+  fastify.put('/users/:id', { schema: {updateUserSchema, tags:['users-v2']} }, async (request, reply) => {
     const { id } = request.params as { id: number }
     const body = request.body as UpdateUserForm;
     const updates: Partial<UserDto> = { ...body } as any;
@@ -154,7 +154,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
     reply.send(updated)
   })
 
-  fastify.delete('/users/:id', { schema: deleteUserSchema }, async (request, reply) => {
+  fastify.delete('/users/:id', { schema: {deleteUserSchema, tags:['users-v2']} }, async (request, reply) => {
     const { id } = request.params as { id: number }
     const success = await service.delete(id)
     if (!success) {
