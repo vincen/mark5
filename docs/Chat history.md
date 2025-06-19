@@ -360,11 +360,11 @@ npx vitest
      provider = "postgresql"
      url      = env("DATABASE_URL")
    }
-   
+
    generator client {
      provider = "prisma-client-js"
    }
-   
+
    model mark5_user {
      pkid      Int     @id @default(autoincrement())
      name      String
@@ -3053,22 +3053,22 @@ import { createApp } from '../src/app';
    import { prisma } from '@infrastructure/db';
    import { Gender } from '@domain/models/user';
    import { createApp } from '@app';
-   
+
    let app: any;
    let createdPkid: number;
-   
+
    describe('User API Integration Tests', () => {
      beforeAll(async () => {
        app = await createApp();
        await app.ready();
        await prisma.mark5_user.deleteMany();
      });
-   
+
      afterAll(async () => {
        await app.close();
        await prisma.$disconnect();
      });
-   
+
      // …其余测试保持不变…
    });
    ```
@@ -3367,7 +3367,7 @@ tests/
       steps:
         - run: npm ci
         - run: npm run test:unit
-  
+
     integration-tests:
       runs-on: ubuntu-latest
       steps:
@@ -8140,10 +8140,10 @@ CMD ["npm", "run", "start"]
      COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
      COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
      COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
-    
+
      # 只需在 Runner 阶段把 .env 复制过来即可
      COPY .env ./
-    
+
      EXPOSE 3000
      CMD ["npm", "run", "start"]
      ```
@@ -9435,15 +9435,15 @@ USE_HTTP2=true ts-node-dev --respawn --transpile-only -r tsconfig-paths/register
    ```dockerfile
    # 1) 复制编译后的 dist/
    COPY --from=builder /app/dist ./dist
-   
+
    # 2) 复制生成的 Prisma Client 文件
    COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
    COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
    COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/client
-   
+
    # 3) 复制 certs 文件夹（保证 server.key/server.crt 在镜像里）
    COPY certs ./certs
-   
+
    # 4) 复制 .env（或用 --env-file 注入环境变量）
    COPY .env ./
    ```
@@ -10786,162 +10786,3 @@ export default async function userRoutes(fastify: FastifyInstance) {
 - 保持了与 DTO、Schema、Service 的清晰分层，TypeScript 全程类型安全。
 
 把这份代码替换到你的项目里，就不会再出现 `birthdate` 类型错误了。
-
-## Round 63: OpenAPI
-
-### You said:
-
-一步一步指导我，完成 openapi 的功能
-
-### ChatGPT said:
-
-下面我们一步一步地在你的 Fastify 项目中集成 OpenAPI（Swagger）生成功能，最终能在浏览器中访问 `/docs` 查看 API 文档，并且把接口的 JSON Schema 自动纳入到规范里。
-
-#### 1. 安装必要插件
-
-在项目根目录运行：
-
-```bash
-npm install fastify-swagger@^6.11.0 @types/swagger-ui --save
-```
-
-- `fastify-swagger`：官方推荐的 Swagger/OpenAPI 插件。
-- `@types/swagger-ui`：为 UI 提供类型定义（可选）。
-
-#### 2. 在 `server.ts` 中注册插件
-
-打开 `src/server.ts`，在创建 `fastify()` 实例后，注册 `fastify-swagger`：
-
-```typescript
-// src/server.ts
-import fastify from 'fastify'
-import userRoutes from './interfaces/controller/userRoutes'
-import fastifySwagger from 'fastify-swagger'
-
-const app = fastify({ logger: true })
-
-// 1) 注册 swagger 插件
-app.register(fastifySwagger, {
-  routePrefix: '/docs',           // 文档访问前缀
-  swagger: {
-    info: {
-      title: 'Mark5 API',         // 文档标题
-      description: '用户管理服务 API 文档',
-      version: '1.0.0',
-    },
-    tags: [
-      { name: 'User', description: 'User CRUD 接口' },
-    ],
-    consumes: ['application/json'],
-    produces: ['application/json'],
-  },
-  exposeRoute: true,              // 开启 /docs 和 /docs/json
-})
-
-// 2) 注册你的业务路由
-app.register(userRoutes, { prefix: '/api' })
-
-// 3) 启动服务
-app.listen({ port: 3000 }, (err, addr) => {
-  if (err) {
-    app.log.error(err)
-    process.exit(1)
-  }
-  app.log.info(`Server listening at ${addr}`)
-})
-```
-
-- `routePrefix`：文档页面和 JSON 的根路径。
-- `swagger` 对象：填写 OpenAPI 根信息，比如 `info`、`tags`、全局 `consumes/produces`。
-- `exposeRoute: true`：允许访问 `/docs`（Swagger UI）和 `/docs/json`（OpenAPI JSON）。
-
-#### 3. 给路由加上 OpenAPI 元数据
-
-在你的每个路由里，通过 Fastify 的 `schema` 选项填写额外的 OpenAPI 信息，比如 `summary`、`description`、`tags`。以 `userRoutes.ts` 为例，修改 POST 和 GET：
-
-```typescript
-// src/interfaces/controller/userRoutes.ts（摘录示例）
-fastify.get<{ Reply: User[] }>(
-  '/users',
-  {
-    schema: {
-      ...listUsersSchema,
-      summary: '获取用户列表',
-      description: '返回所有用户的完整列表',
-      tags: ['User'],
-    },
-  },
-  async (_req, reply) => { /* ... */ }
-)
-
-fastify.post<{ Body: CreateUserForm; Reply: User }>(
-  '/users',
-  {
-    schema: {
-      ...createUserSchema,
-      summary: '创建新用户',
-      description: '根据表单数据新建一个用户并返回完整用户对象',
-      tags: ['User'],
-    },
-  },
-  async (req, reply) => { /* ... */ }
-)
-```
-
-- `summary`：简短概述接口功能。
-- `description`：详细说明。
-- `tags`：归类标签，和 `server.ts` 中的 `tags` 对应。
-
-对所有的 CRUD 接口都加上类似字段。
-
-#### 4. 重启并访问文档
-
-完成以上步骤后，重启服务：
-
-```bash
-npm run dev
-```
-
-在浏览器打开 http://localhost:3000/docs 即可看到 Swagger UI；点击右上角 “Raw” 可查看原始 JSON（也可直接访问 `http://localhost:3000/docs/json`）。
-
-#### 5. （可选）生成并导出 OpenAPI JSON/YAML
-
-如果你需要把文档导出为文件，可以在启动时把 `/docs/json` 存到本地：
-
-```bash
-curl http://localhost:3000/docs/json > openapi.json
-```
-
-或者转成 YAML：
-
-```bash
-npm install -g yamljs
-yaml2json openapi.json > openapi.yaml
-```
-
-#### 6. （可选）在 CI 中校验文档
-
-安装 `speccy` 进行 OpenAPI 校验：
-
-```bash
-npm install --save-dev @speccy/spec
-```
-
-在 `package.json` 增加校验脚本：
-
-```json
-"scripts": {
-  "lint:openapi": "speccy lint openapi.json"
-}
-```
-
-然后在 CI 里运行：
-
-```bash
-npm run lint:openapi
-```
-
-确保文档符合 OpenAPI 3.0 规范。
-
-🎉 至此，你的 Fastify 服务已经完整集成了 OpenAPI/Swagger 功能，具备自动文档、UI 展示、JSON 导出以及校验能力。
-如果有更高级的需求（OAuth2 授权、服务器变量、组件复用等），也可在 `fastify-swagger` 的 `swagger` 配置里进一步扩展。
