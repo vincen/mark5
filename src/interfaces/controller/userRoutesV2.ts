@@ -33,7 +33,7 @@ const listUsersSchema: FastifySchema = {
   response: {
     200: {
       type: "array",
-      items: userSchema
+      items: userSchema,
     },
   },
 };
@@ -139,10 +139,9 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.post<{
-    Body: CreateUserForm;
-    Reply: User;
-  }>("/users", { schema: { ...createUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
+  fastify.post<{ Body: CreateUserForm; Reply: User; }>(
+    "/users",
+    { schema: { ...createUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
     // const body = request.body as CreateUserForm;
     const userDto: UserDto = {
       ...request.body,
@@ -155,7 +154,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
   fastify.put<{
     Params: UserIdParam;
     Body: UpdateUserForm;
-    Reply: User | NotFoundReply
+    Reply: User | NotFoundReply;
   }>("/users/:id", { schema: { ...updateUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
     const { id } = request.params;
     const updates: Partial<UserDto> = { ...request.body } as any;
@@ -171,7 +170,7 @@ export default async function userRoutes(fastify: FastifyInstance) {
 
   fastify.delete<{
     Params: UserIdParam;
-    Reply: null | NotFoundReply
+    Reply: null | NotFoundReply;
   }>("/users/:id", { schema: { ...deleteUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
     const { id } = request.params;
     const success = await service.delete(id);

@@ -15,27 +15,27 @@ export class UserRepository {
   }
 
   async create(user: Omit<User, 'pkid'>): Promise<User> {
-    const row = await prisma.mark5_user.create({ data: user });
+    const row = await prisma.user.create({ data: user });
     return this.toModel(row);
   }
 
   async findByPkid(pkid: number): Promise<User | null> {
-    const row = await prisma.mark5_user.findUnique({ where: { pkid: +pkid } });
+    const row = await prisma.user.findUnique({ where: { pkid: +pkid } });
     return row ? this.toModel(row) : null;
   }
 
   async update(pkid: number, data: Partial<Omit<User, 'pkid'>>): Promise<User | null> {
-    const row = await prisma.mark5_user.update({ where: { pkid: +pkid }, data });
+    const row = await prisma.user.update({ where: { pkid: +pkid }, data });
     return this.toModel(row);
   }
 
   async delete(pkid: number): Promise<boolean> {
-    await prisma.mark5_user.delete({ where: { pkid: +pkid } });
+    await prisma.user.delete({ where: { pkid: +pkid } });
     return true;
   }
 
   async list(): Promise<User[]> {
-    const rows = await prisma.mark5_user.findMany();
+    const rows = await prisma.user.findMany();
     return rows.map(this.toModel);
   }
 }

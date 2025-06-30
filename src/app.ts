@@ -4,6 +4,7 @@ import userRoutesV2 from '@interfaces/controller/userRoutesV2';
 import { userRoutes } from '@interfaces/controller/userRoutes';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUI from '@fastify/swagger-ui';
+import { publisherRoutes } from '@interfaces/controller/publisherRoutes';
 
 export async function createApp() {
   const app = Fastify({
@@ -57,9 +58,12 @@ export async function createApp() {
   });
 
   await app.register(sensible);
+
   // Register routes
   await app.register(userRoutes, { prefix: '/api/v1' });
   await app.register(userRoutesV2, { prefix: '/api/v2' });
+  await app.register(publisherRoutes, { prefix: '/api/v1' });
+
   // Add a health check route
   app.get('/health', async (request, reply) => {
     return { status: 'ok', timestamp: new Date() };

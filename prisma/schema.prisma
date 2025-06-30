@@ -14,7 +14,7 @@ datasource db {
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
-model mark5_user {
+model User {
   pkid      Int     @id @default(autoincrement())
   name      String
   email     String
@@ -22,4 +22,73 @@ model mark5_user {
   gender    String
   height    Int
   status    Boolean
+
+  @@map("mark5_user")
+}
+
+model Book {
+  pkid            Int       @id @default(autoincrement())
+  title           String
+  isbn            String    @unique
+  price           Float
+  edition         String
+  printing        String
+  imageUrl        String
+  remark          String?
+
+  // 显式多对多：关联到作者
+  bookAuthors     BookAuthor[]
+  // 显式多对多：关联到译者
+  bookTranslators BookTranslator[]
+  // 多对一关联到出版社
+  publisher   Publisher @relation(fields: [publisherId], references: [pkid])
+  publisherId Int
+
+  @@map("mark5_book")
+}
+
+model Author {
+  pkid            Int      @id @default(autoincrement())
+  name            String
+  country         String?
+  birthDate       DateTime?
+  deathDate       DateTime?
+  introduction    String?
+
+  // 反向显式多对多
+  bookAuthors     BookAuthor[]
+  bookTranslators BookTranslator[]
+
+  @@map("mark5_author")
+}
+
+model Publisher {
+  pkid         Int      @id @default(autoincrement())
+  name         String   @unique
+
+  books        Book[]
+
+  @@map("mark5_publisher")
+}
+
+// 中间表：书—作者
+model BookAuthor {
+  book     Book   @relation(fields: [bookId], references: [pkid])
+  bookId   Int
+  author   Author @relation(fields: [authorId], references: [pkid])
+  authorId Int
+
+  @@id([bookId, authorId])
+  @@map("mark5_book_author")
+}
+
+// 中间表：书—译者（也是 Author 表）
+model BookTranslator {
+  book          Book   @relation(fields: [bookId], references: [pkid])
+  bookId        Int
+  translator    Author @relation(fields: [translatorId], references: [pkid])
+  translatorId  Int
+
+  @@id([bookId, translatorId])
+  @@map("mark5_book_translator")
 }
