@@ -56,4 +56,9 @@ export class BookService {
   async countByPublisher(publisherId: number): Promise<number> {
     return this.repo.countByPublisher(publisherId)
   }
+
+  /** Count book by author id */
+  async countByAuthor(authorId: number): Promise<number> {
+    return this.repo.countByAuthor(authorId)
+  }
 }

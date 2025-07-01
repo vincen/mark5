@@ -111,6 +111,11 @@ export class BookRepository {
     return prisma.book.count({ where: { publisherId } });
   }
 
+  /** Count book by author id */
+  async countByAuthor(authorId: number): Promise<number> {
+    return prisma.bookAuthor.count({ where: { authorId } });
+  }
+
   /**
    * 更新一本书，含关系重置
    */

@@ -3,6 +3,7 @@ import { Publisher } from "@domain/models/book/book";
 import { AlreadyExistsError, NotFoundError, RelatedEntityError } from "@domain/shared/error";
 import { conflict, DuplicatedReply, ErrorReply, HTTP_404_SCHEMA, IdParam, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
 import { FastifyInstance } from "fastify";
+import { get } from "http";
 
 const PUBLISHER_TAG = "publisher-v1";
 
@@ -64,10 +65,7 @@ const updatePublisherSchema = {
   tags: [PUBLISHER_TAG],
   params: getPublisherSchema.params,
   body: createPublisherSchema.body,
-  response: {
-    200: publisherSchema,
-    404: HTTP_404_SCHEMA,
-  },
+  response: getPublisherSchema.response,
 };
 
 // DELETE /publishers/:id
