@@ -7,9 +7,12 @@ export interface CreateBookForm {
   imageUrl: string
   remark?: string
 
-  authorIds: number[]
+  authorIds?: number[]
+  authorNames?: string[]
   translatorIds?: number[]
-  publisherId: number
+  translatorNames?: string[]
+  publisherId?: number
+  publisherName?: string
 }
 
 export interface UpdateBookForm {
@@ -22,6 +25,9 @@ export interface UpdateBookForm {
   remark?: string
 
   authorIds?: number[]
+  authorNames?: string[]
   translatorIds?: number[]
+  translatorNames?: string[]
   publisherId?: number
+  publisherName?: string
 }

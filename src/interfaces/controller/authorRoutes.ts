@@ -3,8 +3,8 @@ import { AuthorService } from "@application/services/authorService";
 import { CreateAuthorForm, UpdateAuthorForm } from "@interfaces/form/authorForm";
 import { Author } from "@domain/models/book/book";
 import { AuthorDto } from "@application/dto/authorDto";
-import { ErrorReply, HTTP_404_SCHEMA, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
-import { NotFoundError } from "@domain/shared/error";
+import { conflict, ErrorReply, HTTP_4xx_SCHEMA, ID_PARAM_SCHEMA, IdParam, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
+import { NotFoundError, RelatedEntityError } from "@domain/shared/error";
 
 const AUTHOR_TAG = "authors-v1";
 
@@ -18,10 +18,7 @@ const authorBase = {
 
 const authorSchema = {
   type: "object",
-  properties: {
-    pkid: { type: "integer" },
-    ...authorBase,
-  },
+  properties: { pkid: { type: "integer" }, ...authorBase },
   required: ["pkid", "name"],
   additionalProperties: false,
 };
@@ -38,14 +35,10 @@ const listAuthorsSchema: FastifySchema = {
 
 const getAuthorSchema: FastifySchema = {
   tags: [AUTHOR_TAG],
-  params: {
-    type: "object",
-    properties: { id: { type: "integer", minimum: 1 } },
-    required: ["id"],
-  },
+  params: ID_PARAM_SCHEMA,
   response: {
     200: authorSchema,
-    404: HTTP_404_SCHEMA,
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
@@ -64,7 +57,7 @@ const createAuthorSchema: FastifySchema = {
 
 const updateAuthorSchema: FastifySchema = {
   tags: [AUTHOR_TAG],
-  params: getAuthorSchema.params,
+  params: ID_PARAM_SCHEMA,
   body: {
     type: "object",
     properties: authorBase,
@@ -76,10 +69,10 @@ const updateAuthorSchema: FastifySchema = {
 
 const deleteAuthorSchema: FastifySchema = {
   tags: [AUTHOR_TAG],
-  params: getAuthorSchema.params,
+  params: ID_PARAM_SCHEMA,
   response: {
     204: { type: "null" },
-    404: HTTP_404_SCHEMA,
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
@@ -96,14 +89,14 @@ function toAuthorDto(data: CreateAuthorForm|UpdateAuthorForm): AuthorDto {
 export default async function authorRoutes(fastify: FastifyInstance) {
   const service = new AuthorService();
   // List
-  fastify.get<{ Reply: Author[] }>("/authors", { schema: { ...listAuthorsSchema } }, async (_, reply) => {
+  fastify.get<{ Reply: Author[] }>("/authors", { schema: listAuthorsSchema }, async (_, reply) => {
     reply.send(await service.list());
   });
 
   // Get by ID
   fastify.get<{ Params: { id: number }; Reply: Author | NotFoundReply }>(
     "/authors/:id",
-    { schema: { ...getAuthorSchema } },
+    { schema: getAuthorSchema },
     async (req, reply) => {
       const author = await service.findByPkid(req.params.id);
       if (!author) return notFound(reply);
@@ -112,7 +105,7 @@ export default async function authorRoutes(fastify: FastifyInstance) {
   );
 
   // Create
-  fastify.post<{ Body: CreateAuthorForm; Reply: Author }>("/authors", { schema: { ...createAuthorSchema } },
+  fastify.post<{ Body: CreateAuthorForm; Reply: Author }>("/authors", { schema: createAuthorSchema },
     async (req, reply) => {
       const authorDto: AuthorDto = toAuthorDto(req.body);
       const created = await service.create(authorDto);
@@ -123,7 +116,7 @@ export default async function authorRoutes(fastify: FastifyInstance) {
   // Update
   fastify.put<{ Params: { id: number }; Body: UpdateAuthorForm; Reply: Author | ErrorReply }>(
     "/authors/:id",
-    { schema: { ...updateAuthorSchema } },
+    { schema: updateAuthorSchema },
     async (req, reply) => {
       const authorDto: AuthorDto = toAuthorDto(req.body);
       try {
@@ -139,15 +132,24 @@ export default async function authorRoutes(fastify: FastifyInstance) {
   );
 
   // Delete
-  fastify.delete<{ Params: { id: number }; Reply: null | { message: string } }>(
+  fastify.delete<{ Params: IdParam; Reply: null | ErrorReply }>(
     "/authors/:id",
-    { schema: { ...deleteAuthorSchema } },
+    { schema: deleteAuthorSchema },
     async (req, reply) => {
-      const ok = await service.delete(req.params.id);
-      if (!ok) {
-        return reply.code(409).send({ message: "Cannot delete author: they may be associated with books" });
+      try {
+        const deleted = await service.delete(req.params.id);
+        if (!deleted) {
+          return "{ message: 'Unknow error when deleting publisher' }"
+        }
+        reply.code(204).send();
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          return notFound(reply);
+        } else if (error instanceof RelatedEntityError) {
+          return conflict(reply, error.message);
+        }
+        throw error; // Re-throw other errors to be handled by global error handler
       }
-      reply.code(204).send();
     }
   );
 }

@@ -1,9 +1,8 @@
 import { PublisherService } from "@application/services/publisherService";
 import { Publisher } from "@domain/models/book/book";
 import { AlreadyExistsError, NotFoundError, RelatedEntityError } from "@domain/shared/error";
-import { conflict, DuplicatedReply, ErrorReply, HTTP_404_SCHEMA, IdParam, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
+import { conflict, DuplicatedReply, ErrorReply, HTTP_4xx_SCHEMA, ID_PARAM_SCHEMA, IdParam, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
 import { FastifyInstance } from "fastify";
-import { get } from "http";
 
 const PUBLISHER_TAG = "publisher-v1";
 
@@ -35,14 +34,10 @@ const listPublishersSchema = {
 // GET /publishers/:id
 const getPublisherSchema = {
   tags: [PUBLISHER_TAG],
-  params: {
-    type: "object",
-    properties: { id: { type: "integer", minimum: 1 } },
-    required: ["id"],
-  },
+  params: ID_PARAM_SCHEMA,
   response: {
     200: publisherSchema,
-    404: HTTP_404_SCHEMA,
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
@@ -63,7 +58,7 @@ const createPublisherSchema = {
 // PUT /publishers/:id
 const updatePublisherSchema = {
   tags: [PUBLISHER_TAG],
-  params: getPublisherSchema.params,
+  params: ID_PARAM_SCHEMA,
   body: createPublisherSchema.body,
   response: getPublisherSchema.response,
 };
@@ -71,10 +66,10 @@ const updatePublisherSchema = {
 // DELETE /publishers/:id
 const deletePublisherSchema = {
   tags: [PUBLISHER_TAG],
-  params: getPublisherSchema.params,
+  params: ID_PARAM_SCHEMA,
   response: {
     204: { type: "null" },
-    404: HTTP_404_SCHEMA,
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
@@ -119,8 +114,8 @@ export async function publisherRoutes(fastify: FastifyInstance) {
     { schema: updatePublisherSchema },
     async (request, reply) => {
       try {
-        const updatedPublisher = await service.update(request.params.id, request.body);
-        return reply.send(updatedPublisher);
+        const updated = await service.update(request.params.id, request.body);
+        return reply.send(updated);
       } catch (error) {
         if (error instanceof NotFoundError) {
           return notFound(reply);
@@ -139,7 +134,7 @@ export async function publisherRoutes(fastify: FastifyInstance) {
       try {
         const deleted = await service.delete(request.params.id);
         if (!deleted) {
-          return "{ message: 'Delete publisher unknow error' }"
+          return "{ message: 'Unknow error when deleting publisher' }"
         }
         return reply.status(204).send();
       } catch (error) {

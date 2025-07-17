@@ -12,6 +12,15 @@ export class AuthorService {
     return this.repo.create(data)
   }
 
+  async createAuthors(authorNames: string[]): Promise<number[]> {
+    const authorIds: number[] = [];
+    for (const name of authorNames) {
+      const author = await this.repo.create({ name });
+      authorIds.push(author.pkid);
+    }
+    return authorIds;
+  }
+
   async findByPkid(pkid: number): Promise<Author | null> {
     return this.repo.findByPkid(pkid)
   }
@@ -25,16 +34,22 @@ export class AuthorService {
   }
 
   async delete(pkid: number): Promise<boolean> {
-    // Check if author has associated books
-    const bookCount = await this.bookService.countByAuthor(pkid);
-    if (bookCount > 0) {
-      throw new RelatedEntityError("Author", pkid, bookCount);
-    }
     // Check if author exists
     const existingAuthor = await this.findByPkid(pkid);
     if (!existingAuthor) {
       throw new NotFoundError("Author", pkid);
     }
+
+    // Check if author has associated books
+    const bookCount = await this.bookService.countByAuthor(pkid);
+    if (bookCount > 0) {
+      throw new RelatedEntityError("Author", pkid, bookCount);
+    }
+    const bookCount2 = await this.bookService.countByTranslator(pkid);
+    if (bookCount2 > 0) {
+      throw new RelatedEntityError("Author", pkid, bookCount2);
+    }
+
     // Proceed with deletion
     return this.repo.delete(pkid)
   }

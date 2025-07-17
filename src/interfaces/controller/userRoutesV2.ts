@@ -3,6 +3,7 @@ import { UserDto } from "@application/dto/userDto";
 import { UserServiceV2 } from "@application/services/userServiceV2";
 import { Gender, User } from "@domain/models/account/user";
 import { CreateUserForm, UpdateUserForm } from "@interfaces/form/userForm";
+import { HTTP_4xx_SCHEMA, ID_PARAM_SCHEMA, IdParam, notFound, NotFoundReply } from "@interfaces/shared/httpDef";
 import { FastifyInstance, FastifySchema } from "fastify";
 
 const USER_TAG = "users-v2";
@@ -30,6 +31,7 @@ const userSchema = {
 
 // GET /users
 const listUsersSchema: FastifySchema = {
+  tags: [USER_TAG],
   response: {
     200: {
       type: "array",
@@ -40,22 +42,17 @@ const listUsersSchema: FastifySchema = {
 
 // GET /users/:id
 const getUserSchema: FastifySchema = {
-  params: {
-    type: "object",
-    properties: { id: { type: "integer", minimum: 1 } },
-    required: ["id"],
-  },
+  tags: [USER_TAG],
+  params: ID_PARAM_SCHEMA,
   response: {
     200: userSchema,
-    404: {
-      type: "object",
-      properties: { message: { type: "string" } },
-    },
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
 // POST /users
 const createUserSchema: FastifySchema = {
+  tags: [USER_TAG],
   body: {
     type: "object",
     properties: { ...userBaseProperties },
@@ -69,11 +66,8 @@ const createUserSchema: FastifySchema = {
 
 // PUT /users/:id
 const updateUserSchema: FastifySchema = {
-  params: {
-    type: "object",
-    properties: { id: { type: "integer", minimum: 1 } },
-    required: ["id"],
-  },
+  tags: [USER_TAG],
+  params: ID_PARAM_SCHEMA,
   body: {
     type: "object",
     properties: { ...userBaseProperties },
@@ -82,53 +76,31 @@ const updateUserSchema: FastifySchema = {
   },
   response: {
     200: userSchema,
-    404: {
-      type: "object",
-      properties: { message: { type: "string" } },
-    },
+    404: HTTP_4xx_SCHEMA,
   },
 };
 
 // DELETE /users/:id
 const deleteUserSchema: FastifySchema = {
-  params: {
-    type: "object",
-    properties: { id: { type: "integer", minimum: 1 } },
-    required: ["id"],
-  },
+  tags: [USER_TAG],
+  params: ID_PARAM_SCHEMA,
   response: {
     204: { type: "null" },
-    404: {
-      type: "object",
-      properties: { message: { type: "string" } },
-    },
+    404: HTTP_4xx_SCHEMA,
   },
 };
-
-// Typpe aliases for request bodies
-type UserIdParam = { id: number };
-type NotFoundReply = { message: string };
-
-// Helper function for not found responses
-function notFound(reply: any): any {
-  return reply.code(404).send({ message: "User not found" });
-}
 
 export default async function userRoutes(fastify: FastifyInstance) {
   const service = new UserServiceV2();
 
-  fastify.get<{ Reply: User[] }>(
-    "/users",
-    { schema: { ...listUsersSchema, tags: [USER_TAG] } },
-    async (request, reply) => {
-      const users = await service.list();
-      reply.send(users);
-    }
-  );
+  fastify.get<{ Reply: User[] }>("/users", { schema: listUsersSchema }, async (request, reply) => {
+    const users = await service.list();
+    reply.send(users);
+  });
 
-  fastify.get<{ Params: UserIdParam; Reply: User | NotFoundReply }>(
+  fastify.get<{ Params: IdParam; Reply: User | NotFoundReply }>(
     "/users/:id",
-    { schema: { ...getUserSchema, tags: [USER_TAG] } },
+    { schema: getUserSchema },
     async (request, reply) => {
       const { id } = request.params;
       const user = await service.findByPkid(id);
@@ -139,23 +111,22 @@ export default async function userRoutes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.post<{ Body: CreateUserForm; Reply: User; }>(
+  fastify.post<{ Body: CreateUserForm; Reply: User }>(
     "/users",
-    { schema: { ...createUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
-    // const body = request.body as CreateUserForm;
-    const userDto: UserDto = {
-      ...request.body,
-      birthdate: new Date(request.body.birthdate), // 转换为 Date 对象
-    };
-    const user = await service.create(userDto);
-    reply.code(201).send(user);
-  });
+    { schema: createUserSchema },
+    async (request, reply) => {
+      // const body = request.body as CreateUserForm;
+      const userDto: UserDto = {
+        ...request.body,
+        birthdate: new Date(request.body.birthdate), // 转换为 Date 对象
+      };
+      const user = await service.create(userDto);
+      reply.code(201).send(user);
+    }
+  );
 
-  fastify.put<{
-    Params: UserIdParam;
-    Body: UpdateUserForm;
-    Reply: User | NotFoundReply;
-  }>("/users/:id", { schema: { ...updateUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
+  fastify.put<{Params: IdParam; Body: UpdateUserForm; Reply: User | NotFoundReply; }>(
+    "/users/:id", { schema: updateUserSchema }, async (request, reply) => {
     const { id } = request.params;
     const updates: Partial<UserDto> = { ...request.body } as any;
     if (updates.birthdate) {
@@ -168,10 +139,8 @@ export default async function userRoutes(fastify: FastifyInstance) {
     reply.send(updated);
   });
 
-  fastify.delete<{
-    Params: UserIdParam;
-    Reply: null | NotFoundReply;
-  }>("/users/:id", { schema: { ...deleteUserSchema, tags: [USER_TAG] } }, async (request, reply) => {
+  fastify.delete<{Params: IdParam; Reply: null | NotFoundReply; }>(
+    "/users/:id", { schema: deleteUserSchema }, async (request, reply) => {
     const { id } = request.params;
     const success = await service.delete(id);
     if (!success) {

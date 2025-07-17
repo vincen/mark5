@@ -61,7 +61,7 @@ export class BookRepository {
   }
 
   /**
-   * 按主键查找一本书，包含关系
+   * Find a book by primary key id, including relations
    */
   async findByPkid(pkid: number): Promise<
     | (Book & {
@@ -106,6 +106,43 @@ export class BookRepository {
     };
   }
 
+  /**
+   * 按 ISBN 查找一本书
+   */
+  async findByIsbn(isbn: string): Promise<Book | null> {
+    const found = await prisma.book.findUnique({
+      where: { isbn },
+      select: {
+        pkid: true,
+        title: true,
+        isbn: true,
+        price: true,
+        edition: true,
+        printing: true,
+        imageUrl: true,
+        remark: true,
+        publisherId: true,
+        bookAuthors: { select: { authorId: true } },
+        bookTranslators: { select: { translatorId: true } },
+      },
+    });
+    if (!found) return null;
+    return {
+      pkid: found.pkid,
+      title: found.title,
+      isbn: found.isbn,
+      price: found.price,
+      edition: found.edition,
+      printing: found.printing,
+      imageUrl: found.imageUrl,
+      remark: found.remark ?? undefined,
+
+      authorIds: found.bookAuthors.map((ba) => ba.authorId),
+      translatorIds: found.bookTranslators.length ? found.bookTranslators.map((bt) => bt.translatorId) : undefined,
+      publisherId: found.publisherId,
+    };
+  }
+
   /** Count book by publisher id */
   async countByPublisher(publisherId: number): Promise<number> {
     return prisma.book.count({ where: { publisherId } });
@@ -116,10 +153,14 @@ export class BookRepository {
     return prisma.bookAuthor.count({ where: { authorId } });
   }
 
+  async countByTranslator(translatorId: number): Promise<number> {
+    return prisma.bookTranslator.count({ where: { translatorId } });
+  }
+
   /**
    * 更新一本书，含关系重置
    */
-  async update(pkid: number, data: Partial<Omit<Book, "pkid">>): Promise<Book | null> {
+  async update(pkid: number, data: Partial<Omit<Book, "pkid">>): Promise<Book> {
     // 构建 update 对象
     const updateData: any = {};
     if (data.title !== undefined) updateData.title = data.title;
@@ -157,39 +198,38 @@ export class BookRepository {
       };
     }
 
-    try {
-      const updated = await prisma.book.update({
-        where: { pkid },
-        data: updateData,
-        include: {
-          bookAuthors: { select: { authorId: true } },
-          bookTranslators: { select: { translatorId: true } },
-        },
-      });
-      return {
-        pkid: updated.pkid,
-        title: updated.title,
-        isbn: updated.isbn,
-        price: updated.price,
-        edition: updated.edition,
-        printing: updated.printing,
-        imageUrl: updated.imageUrl,
-        remark: updated.remark ?? undefined,
+    // 执行更新
+    const updated = await prisma.book.update({
+      where: { pkid },
+      data: updateData,
+      include: {
+        bookAuthors: { select: { authorId: true } },
+        bookTranslators: { select: { translatorId: true } },
+      },
+    });
+    return {
+      pkid: updated.pkid,
+      title: updated.title,
+      isbn: updated.isbn,
+      price: updated.price,
+      edition: updated.edition,
+      printing: updated.printing,
+      imageUrl: updated.imageUrl,
+      remark: updated.remark ?? undefined,
 
-        authorIds: updated.bookAuthors.map((ba) => ba.authorId),
-        translatorIds: updated.bookTranslators.length
-          ? updated.bookTranslators.map((bt) => bt.translatorId)
-          : undefined,
-        publisherId: updated.publisherId,
-      };
-    } catch {
-      // 若记录不存在，Prisma 会抛出错误
-      return null;
-    }
+      authorIds: updated.bookAuthors.map((ba) => ba.authorId),
+      translatorIds: updated.bookTranslators.length ? updated.bookTranslators.map((bt) => bt.translatorId) : undefined,
+      publisherId: updated.publisherId,
+
+            // 额外附带的关联对象
+      authors: found.bookAuthors.map((ba) => ba.author),
+      translators: found.bookTranslators.map((bt) => bt.translator),
+      publisher: found.publisher,
+    };
   }
 
   /**
-   * 删除一本书
+   * Delete a book by primary key id
    */
   async delete(pkid: number): Promise<boolean> {
     try {
@@ -200,26 +240,25 @@ export class BookRepository {
     }
   }
 
-  /**
-   * 列出所有书，返回基础字段与 IDs
-   */
-  async list(): Promise<Book[]> {
-    const list = await prisma.book.findMany({
-      select: {
-        pkid: true,
-        title: true,
-        isbn: true,
-        price: true,
-        edition: true,
-        printing: true,
-        imageUrl: true,
-        remark: true,
-        publisherId: true,
-        bookAuthors: { select: { authorId: true } },
-        bookTranslators: { select: { translatorId: true } },
+  async list(): Promise<
+    (Book & {
+      authors: { pkid: number; name: string }[];
+      translators?: { pkid: number; name: string }[];
+      publisher: { pkid: number; name: string };
+    })[]
+  > {
+    const books = await prisma.book.findMany({
+      include: {
+        bookAuthors: {
+          select: { author: { select: { pkid: true, name: true } } },
+        },
+        bookTranslators: {
+          select: { translator: { select: { pkid: true, name: true } } },
+        },
+        publisher: { select: { pkid: true, name: true } },
       },
     });
-    return list.map((b) => ({
+    return books.map((b) => ({
       pkid: b.pkid,
       title: b.title,
       isbn: b.isbn,
@@ -229,9 +268,13 @@ export class BookRepository {
       imageUrl: b.imageUrl,
       remark: b.remark ?? undefined,
 
-      authorIds: b.bookAuthors.map((ba) => ba.authorId),
-      translatorIds: b.bookTranslators.length ? b.bookTranslators.map((bt) => bt.translatorId) : undefined,
+      authorIds: b.bookAuthors.map((ba) => ba.author.pkid),
+      translatorIds: b.bookTranslators.length ? b.bookTranslators.map((bt) => bt.translator.pkid) : undefined,
       publisherId: b.publisherId,
+
+      authors: b.bookAuthors.map((ba) => ba.author),
+      translators: b.bookTranslators.map((bt) => bt.translator),
+      publisher: b.publisher,
     }));
   }
 }
